@@ -19,6 +19,7 @@
 import ftputil
 import os
 import re
+import urllib2
 
 # Retrieve the desired state-level census tract zip files from the census
 # FTP site.
@@ -44,6 +45,22 @@ def RetrieveShapefiles():
     census.download_if_newer('geo/tiger/TIGER2010/TRACT/2010/' + f, f)
   census.close()
 
+# Fetch the national boundary files.
+def RetrieveBoundaryFiles():
+  print 'Retrieving Census boundary file...'
+  bound = urllib2.urlopen(
+      'http://www2.census.gov/geo/tiger/GENZ2015/kml/cb_2015_us_nation_5m.zip')
+  if not bound.getcode() == 200:
+    raise Exception('Could not find boundary definnition file')
+  with open('cb_2015_us_nation_5m.zip', 'wb') as out:
+    while True:
+      c = bound.read(64*1024)
+      if not c:
+        break
+      out.write(c)
+  bound.close()
+  print 'Retrieved Census boundary file'
+
 # Find the directory of this script.
 dir = os.path.dirname(os.path.realpath(__file__))
 rootDir = os.path.dirname(os.path.dirname(dir))
@@ -53,4 +70,5 @@ if not os.path.exists(dest):
   os.makedirs(dest)
 os.chdir(dest)
 RetrieveShapefiles()
+RetrieveBoundaryFiles()
 

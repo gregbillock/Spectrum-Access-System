@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-# This script retrieves and processes tiger/shapefiles from the US Census
+# This script processes tiger/shapefiles from the US Census
 # to create KML files with polygons describing the census tracts.
 # The polygons are labeled with the GEOID attribute of the census tracts,
 # and the ALAND and AWATER attributes are translated to metadata
@@ -22,6 +22,7 @@
 # and inner boundaries). The point order of the polygon boundaries follows
 # KML guidelines: outer boundaries are clockwise, inner boundaries are
 # counter-clockwise.
+# It also extracts the national boundary KML file
 
 from lxml import etree
 from pykml.factory import KML_ElementMaker as KML
@@ -38,17 +39,14 @@ import zipfile
 
 
 # Unzip all the .zip files in the current directory.
-def UnzipFiles():
-  if os.path.exists('UNZIPPED'):
-    return
+def UnzipBoundaryFile():
   files = os.listdir('.')
   for f in files:
-    if os.path.isfile(f) and re.match('.*\.zip$', f):
+    print f
+    if os.path.isfile(f) and re.match('cb.*\.zip$', f):
       print 'Unzip %s' % f
       with zipfile.ZipFile(f) as zf:
         zf.extractall()
-  with open('UNZIPPED', 'w'):
-    os.utime('UNZIPPED', None)
 
 
 # Convert a shapefile geometry to a KML placemark. The
@@ -255,6 +253,8 @@ print 'Converting shapefile files in %s' % dest
 files = os.listdir(dest)
 print 'Found %d zip files to translate' % len(files)
 for f in files:
-  if os.path.isfile(dest + '/' + f) and re.match('.*\.zip$', f):
+  if os.path.isfile(dest + '/' + f) and re.match('tl.*\.zip$', f):
     TranslateShpFileToKML(dest + '/' + f)
 
+os.chdir(dest)
+UnzipBoundaryFile()

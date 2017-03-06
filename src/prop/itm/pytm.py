@@ -17,6 +17,8 @@
 # out-of-bounds values.
 
 import itm
+import math
+import sys
 
 # Calculate the point-to-point predicted loss for a path.
 # Arguments:
@@ -109,4 +111,36 @@ def point_to_point(elevation, transmitter_height_meters, receiver_height_meters,
 
   return loss
 
-# TODO: main method that takes freq/location and prints loss
+# This variant calculates median (flat) loss from a transmitter to a receiver.
+def point_to_point_median(transmitter_height_meters, receiver_height_meters, distance_m,
+                          dielectric_constant, soil_conductivity, refractivity,
+                          frequency_mhz, radio_climate, polarization):
+  N = (int)(math.ceil(distance_m/30.0))
+  elev = [0] * (N + 3)
+  elev[0] = N+1
+  elev[1] = distance_m/float(elev[0])
+
+  return point_to_point(elev, transmitter_height_meters, receiver_height_meters,
+                        dielectric_constant, soil_conductivity, refractivity,
+                        frequency_mhz, radio_climate, polarization, 0.5, 0.5)
+
+# When run from the command line, takes in the tx, rx heights, followed by
+# distance in meters and frequency in mhz.
+if __name__ == '__main__':
+  txh = float(sys.argv[1])
+  rxh = float(sys.argv[2])
+  d = float(sys.argv[3])
+  f = float(sys.argv[4])
+
+  dielectric_constant = 25.0  # good ground
+  soil_conductivity = 0.02    # good ground
+  polarization = 1            # vertical
+  refractivity = 301          # good default value equivalent to 4/3 earth curvature
+  radio_climate = 5   # Continental temperate
+
+  median_loss = point_to_point_median(txh, rxh, d,
+                                      dielectric_constant, soil_conductivity, refractivity,
+                                      f, radio_climate, polarization)
+
+  print 'Median (flat) loss is %s' % median_loss
+
